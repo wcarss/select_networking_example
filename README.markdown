@@ -7,15 +7,11 @@ Because I didn't remember how and would like to have some decent working sample 
 
 ### How to use it
 
-Just 'make' and you can run the server, then run the client. The server complains about 'no data' by default every 2.5 seconds, and correctly responds to incoming messages of characters up to 256 in length. You can gracefully kill the server by sending 
+Just 'make' and you can run the server, then run the client. The server complains about 'no data' by default every 2.5 seconds, and correctly responds to incoming messages of characters up to 256 in length. You can gracefully kill the server by sending a message to the server that is just the word 'die'.
 
-./client die
+The server and the client will both print out termination messages and they still print a bit of debug data.
 
-and you can send custom messages by sending
-
-./client this is a message
-
-The server and the client will both print out termination messages and lots of debug data.
+The server should gracefully handle up to 100 clients - that's just an arbitrary number - and as they quit and others join it does a reasonable job of keeping their information in order.
 
 ### What if it breaks!
 

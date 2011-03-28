@@ -10,7 +10,7 @@
 
 #define RESPONSE_LENGTH 256
 #define MESSAGE_LENGTH 256
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 100
 
 int main()
 {
@@ -22,7 +22,6 @@ int main()
   char ch;
   char message[RESPONSE_LENGTH], response[MESSAGE_LENGTH];
   struct timeval tv;
-  strcpy(response, "It's a good day to die!");
   tv.tv_sec = 2;
   tv.tv_usec = 500000;
   fd_set master;
@@ -34,11 +33,9 @@ int main()
   /*  Name the socket.  */
   server_address.sin_family = AF_INET;
   server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_address.sin_port = htons(9734);
+  server_address.sin_port = htons(54321);
   server_len = sizeof(server_address);
   bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
-
-
 
   /*  Create a connection queue and wait for clients.  */
   listen(server_sockfd, 5);
@@ -71,6 +68,8 @@ int main()
     {
       for(i = 0; i < num_clients; i++)
       {
+        if(client_sockfd[i] == -1) continue;
+
 	if(FD_ISSET(client_sockfd[i], &readers))
 	{
 	  activity = 1;
@@ -81,10 +80,11 @@ int main()
 	      perror("failure during read!");
 	    else
 	    {
-              num_clients--;
 	      printf("connection closed.\n");
-	      close(client_sockfd[i]);
               FD_CLR(client_sockfd[i], &master);
+	      close(client_sockfd[i]);
+              client_sockfd[i] = client_sockfd[num_clients-1];
+              num_clients--;
 	    }
 	  }
 	  else
@@ -96,8 +96,11 @@ int main()
 	      printf("Received termination signal...\n");
               for(i = 0; i < num_clients; i++)
               {
-                close(client_sockfd[i]);
-                FD_CLR(client_sockfd[i], &master);  
+                if(client_sockfd[i] != -1)
+                {
+                  close(client_sockfd[i]);
+                  FD_CLR(client_sockfd[i], &master);
+                }  
               }
               
               num_clients = 0;
@@ -107,6 +110,7 @@ int main()
             {
 	       printf("message from client %d: \"%s\"\n", i, message);
 
+               sprintf(response, "got %d chars", strlen(message));
 	       printf("send a string to client %d: \"%s\"\n", i, response);
 	       write(client_sockfd[i], response, RESPONSE_LENGTH);
             }
