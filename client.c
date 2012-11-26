@@ -9,6 +9,8 @@
 
 #define RESPONSE_LENGTH 256
 #define MESSAGE_LENGTH 256
+#define LOCALHOST "127.0.0.1"
+#define PORT 54321
 
 int main(int argc, char *argv[])
 {
@@ -18,13 +20,13 @@ int main(int argc, char *argv[])
 
     if(argc > 1)
     {
-       strcpy(message, "");
-       for(i = 1; i < argc-1; i++)
-       {
-          strcat(message, argv[i]);
-          strcat(message, " ");
-       }
-       strcat(message, argv[argc-1]);
+        strcpy(message, "");
+        for(i = 1; i < argc-1; i++)
+        {
+            strcat(message, argv[i]);
+            strcat(message, " ");
+        }
+        strcat(message, argv[argc-1]);
     }
 
     /* Create a socket for the client. */
@@ -32,11 +34,11 @@ int main(int argc, char *argv[])
 
     /* Name the socket, as agreed with the server. */
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr("127.0.0.1");
-    address.sin_port = htons(54321);
+    address.sin_addr.s_addr = inet_addr(LOCALHOST);
+    address.sin_port = htons(PORT);
     len = sizeof(address);
 
-/*  Now connect our socket to the server's socket.  */
+    /*  Now connect our socket to the server's socket.  */
 
     result = connect(sockfd, (struct sockaddr *)&address, len);
     if(result == -1) {
@@ -46,65 +48,65 @@ int main(int argc, char *argv[])
 
     do
     {
-       printf("What message would you like to send?\n");
-       fgets(buf, MESSAGE_LENGTH, stdin);
-       buf[strlen(buf)-1] = '\0';
+        printf("What message would you like to send?\n");
+        fgets(buf, MESSAGE_LENGTH, stdin);
+        buf[strlen(buf)-1] = '\0';
 
-       strcpy(message, buf);       
-       if((len = write(sockfd, message, MESSAGE_LENGTH)) <= 0)
-       {
-         if(len == 0)
-         {
-            perror("0 bytes written: ");
-         }
-         else
-         {
-            perror("server dead on write: ");
-         }
-       }
-       else if(len != MESSAGE_LENGTH)
-       {
-         perror("incorrect amount written: ");
-       }
-       
-       /* We expect a response */
-       if((len = read(sockfd, response, RESPONSE_LENGTH)) <= 0)
-       {
-          if(len == 0)
-          {
-            printf("connection closed.\n");
-          }
-          else
-          {
-            perror("server died when read expected: ");
-          }
-       }
+        strcpy(message, buf);
+        if((len = write(sockfd, message, MESSAGE_LENGTH)) <= 0)
+        {
+            if(len == 0)
+            {
+                perror("0 bytes written: ");
+            }
+            else
+            {
+                perror("server dead on write: ");
+            }
+        }
+        else if(len != MESSAGE_LENGTH)
+        {
+            perror("incorrect amount written: ");
+        }
 
-       printf("read string from server = \"%s\"\n", response);
+        /* We expect a response */
+        if((len = read(sockfd, response, RESPONSE_LENGTH)) <= 0)
+        {
+            if(len == 0)
+            {
+                printf("connection closed.\n");
+            }
+            else
+            {
+                perror("server died when read expected: ");
+            }
+        }
 
-       if(strcmp(message, "die") == 0)
-       {
-         if(strcmp(response, "server died") == 0)
-         {
-           printf("Successful termination.\n");
-           break;
-         }
-         else
-         {
-           perror("error; server should have died");
-         }
-       }
-       else
-       {
-         if(strcmp(response, "server died") == 0)
-         {
-           perror("error; server died unexpectedly");
-         }
-       }
+        printf("read string from server = \"%s\"\n", response);
 
-       printf("Send another message? (y/n)\n");
-       fgets(buf, MESSAGE_LENGTH, stdin);
-       buf[strlen(buf)-1] = '\0';
+        if(strcmp(message, "die") == 0)
+        {
+            if(strcmp(response, "server died") == 0)
+            {
+                printf("Successful termination.\n");
+                break;
+            }
+            else
+            {
+                perror("error; server should have died");
+            }
+        }
+        else
+        {
+            if(strcmp(response, "server died") == 0)
+            {
+                perror("error; server died unexpectedly");
+            }
+        }
+
+        printf("Send another message? (y/n)\n");
+        fgets(buf, MESSAGE_LENGTH, stdin);
+        buf[strlen(buf)-1] = '\0';
     }while((strcasecmp(buf, "y") == 0) || (strcasecmp(buf, "yes") == 0));
 
     close(sockfd);
